@@ -5,7 +5,12 @@ project(QmlClient)
 set(brain_qml_SOURCES
     main.cpp
     main.qml
-    components/AccountEditor.qml
+    components/ScrollablePage.qml
+    pages/AccountManagement.qml
+    pages/accounts/AccountEditor.qml
+    pages/accounts/AccountView.qml
+    pages/accounts/ConnectionManagerView.qml
+    pages/accounts/ProtocolView.qml
 )
 
 add_executable(brain_im ${brain_qml_SOURCES})
