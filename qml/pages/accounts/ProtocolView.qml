@@ -23,8 +23,9 @@ ScrollablePage {
             width: protocolsList.width - protocolsList.leftMargin - protocolsList.rightMargin
             text: "Name: " + model.name
             onClicked: {
-                window.subtitle += "/" + model.name
-                stackView.push("AccountEditor.qml")
+                stackView.push("AccountEditor.qml", {
+                                   "title": page.title + "/" + model.name
+                               })
                 stackView.currentItem.create(model.cmName, model.name)
             }
         }

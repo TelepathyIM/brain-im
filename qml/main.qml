@@ -7,6 +7,7 @@ import BrainIM 0.1
 import TelepathyQt 0.1
 
 import "components"
+import "pages"
 
 ApplicationWindow {
     id: window
@@ -19,47 +20,26 @@ ApplicationWindow {
     property alias subtitle: subtitleLabel.text
 
     header: ToolBar {
-        RowLayout {
-            anchors.fill: parent
-            Label {
-                id: subtitleLabel
-                elide: Label.ElideRight
-                horizontalAlignment: Qt.AlignHCenter
-                verticalAlignment: Qt.AlignVCenter
-                Layout.fillWidth: true
-            }
+        ToolButton {
+            text: qsTr("<")
+            onClicked: stackView.pop()
+            visible: stackView.depth > 1
+            anchors.left: parent.left
+        }
+        Label {
+            id: subtitleLabel
+            elide: Label.ElideRight
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            text: stackView.currentItem.title
         }
     }
 
     StackView {
         id: stackView
         anchors.fill: parent
-        initialItem: Pane {
-            id: pane
+        initialItem: IndexPage {
 
-            ListView {
-                id: listView
-
-                focus: true
-                currentIndex: -1
-                anchors.fill: parent
-
-                delegate: ItemDelegate {
-                    width: parent.width
-                    text: model.title
-                    highlighted: ListView.isCurrentItem
-                    onClicked: {
-                        window.subtitle = model.title
-                        stackView.push(model.source)
-                    }
-                }
-
-                model: ListModel {
-                    ListElement { title: "Account management"; source: "pages/AccountManagement.qml" }
-                }
-
-                ScrollIndicator.vertical: ScrollIndicator { }
-            }
         }
     }
 

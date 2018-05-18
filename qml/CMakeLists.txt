@@ -7,6 +7,7 @@ set(brain_qml_SOURCES
     main.qml
     components/ScrollablePage.qml
     pages/AccountManagement.qml
+    pages/IndexPage.qml
     pages/accounts/AccountEditor.qml
     pages/accounts/AccountView.qml
     pages/accounts/ConnectionManagerView.qml

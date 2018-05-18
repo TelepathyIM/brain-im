@@ -21,8 +21,10 @@ ScrollablePage {
                 text: "Name: " + model.name
                 width: page.width
                 onClicked: {
-                    window.subtitle = model.name
-                    stackView.push("ProtocolView.qml", { "managers": model.name })
+                    stackView.push("ProtocolView.qml", {
+                                       "title": model.name,
+                                       "managers": model.name
+                                   })
                 }
             }
         }

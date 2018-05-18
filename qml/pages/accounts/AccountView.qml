@@ -25,8 +25,10 @@ ScrollablePage {
                 width: page.width
                 text: displayName + " (" + cmName + "/" + protocolName + ")"
                 onClicked: {
-                    accountCreator.setAccount(model.uniqueIdentifier)
-                    pagesView.currentView = accountCreator
+                    stackView.push("AccountEditor.qml", {
+                                       "title": "Accounts/" + displayName
+                                   })
+                    stackView.currentItem.setAccount(model.uniqueIdentifier)
                 }
             }
         }
@@ -36,8 +38,9 @@ ScrollablePage {
         id: addAccount
         text: "Add account"
         onClicked: {
-            window.subtitle = text
-            stackView.push("ConnectionManagerView.qml")
+            stackView.push("ConnectionManagerView.qml", {
+                               "title": text
+                           })
         }
     }
 }
