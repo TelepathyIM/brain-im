@@ -66,6 +66,7 @@ protected slots:
 protected:
     void setManager(const QString &manager);
     void setProtocol(const QString &protocol);
+    void setProtocolParams(const Tp::ProtocolParameterList &params);
     void setDisplayName(const QString &displayName);
     void setCreationMode(bool creationMode);
     static Role getRealRole(const QModelIndex index, int role);

@@ -220,6 +220,11 @@ void AccountParameterModel::setProtocol(const QString &protocol)
     emit protocolChanged(protocol);
 }
 
+void AccountParameterModel::setProtocolParams(const Tp::ProtocolParameterList &params)
+{
+    m_protocolParams = params;
+}
+
 void AccountParameterModel::setDisplayName(const QString &displayName)
 {
     if (m_displayName == displayName) {
@@ -247,9 +252,9 @@ void AccountParameterModel::reinit()
         if (!protocolInfo.isValid()) {
             qDebug() << Q_FUNC_INFO << "Protocol info is not valid";
         }
-        m_protocolParams = protocolInfo.parameters();
+        setProtocolParams(protocolInfo.parameters());
     } else if (!m_account.isNull() && m_account->isReady()) {
-        m_protocolParams = m_account->protocolInfo().parameters();
+        setProtocolParams(m_account->protocolInfo().parameters());
         m_values = m_account->parameters();
         setManager(m_account->cmName());
         setProtocol(m_account->protocolName());
