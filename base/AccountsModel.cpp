@@ -43,6 +43,23 @@ QVariant AccountsModel::data(const QModelIndex &index, int role) const
     return getData(index.row(), getRealRole(index, role));
 }
 
+bool AccountsModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    return setData(index.row(), getRealRole(index, role), value);
+}
+
+Qt::ItemFlags AccountsModel::flags(const QModelIndex &index) const
+{
+    // We have no role here, but it is OK because declarative viewes ignore it eitherway.
+    // This method makes sense only for roles selected by column
+    const Role realRole = getRealRole(index, Qt::DisplayRole);
+    switch (realRole) {
+    default:
+        break;
+    }
+    return QAbstractTableModel::flags(index);
+}
+
 QVariant AccountsModel::getData(int index, Role role) const
 {
     if (role == InvalidRole) {
@@ -75,6 +92,25 @@ QVariant AccountsModel::getData(int index, Role role) const
     default:
         return QVariant();
     }
+}
+
+bool AccountsModel::setData(int index, AccountsModel::Role role, const QVariant &value)
+{
+    if (role == InvalidRole) {
+        return false;
+    }
+    qWarning() << Q_FUNC_INFO << index << role << value;
+
+    const QList<Tp::AccountPtr> accounts = m_manager->allAccounts();
+    if (accounts.count() <= index) {
+        return false;
+    }
+
+    switch (role) {
+    default:
+        break;
+    }
+    return false;
 }
 
 QHash<int, QByteArray> AccountsModel::roleNames() const

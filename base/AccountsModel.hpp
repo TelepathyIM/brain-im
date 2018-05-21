@@ -28,6 +28,10 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::DisplayRole) override;
+
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
+
     QHash<int, QByteArray> roleNames() const override;
 
 public slots:
@@ -40,6 +44,7 @@ protected:
     static Role getRealRole(const QModelIndex index, int role);
 
     QVariant getData(int index, Role role) const;
+    bool setData(int index, Role role, const QVariant &value);
 
 protected slots:
     void onAMReady(Tp::PendingOperation *operation);
