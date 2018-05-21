@@ -54,6 +54,8 @@ Qt::ItemFlags AccountsModel::flags(const QModelIndex &index) const
     // This method makes sense only for roles selected by column
     const Role realRole = getRealRole(index, Qt::DisplayRole);
     switch (realRole) {
+    case Enabled:
+        return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
     default:
         break;
     }
@@ -105,8 +107,18 @@ bool AccountsModel::setData(int index, AccountsModel::Role role, const QVariant 
     if (accounts.count() <= index) {
         return false;
     }
+    const Tp::AccountPtr account = accounts.at(index);
 
     switch (role) {
+    case Enabled:
+        if (account->isEnabled() == value.toBool()) {
+            // Not changed
+            return false;
+        } else {
+            Tp::PendingOperation *enablement = account->setEnabled(value.toBool());
+            Q_UNUSED(enablement)
+            return true;
+        }
     default:
         break;
     }
