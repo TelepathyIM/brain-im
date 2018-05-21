@@ -37,31 +37,17 @@ int AccountsModel::columnCount(const QModelIndex &parent) const
 
 QVariant AccountsModel::data(const QModelIndex &index, int role) const
 {
-//    qDebug() << index << role;
     if (!index.isValid()) {
         return QVariant();
     }
-
-    Role realRole = InvalidRole;
-
-    if (role >= BaseRole) {
-        realRole = static_cast<Role>(role - BaseRole);
-    } else {
-        switch (role) {
-        case Qt::DisplayRole:
-        case Qt::EditRole:
-            realRole = static_cast<Role>(index.column());
-            break;
-        default:
-            return QVariant();
-        }
-    }
-
-    return getData(index.row(), realRole);
+    return getData(index.row(), getRealRole(index, role));
 }
 
 QVariant AccountsModel::getData(int index, Role role) const
 {
+    if (role == InvalidRole) {
+        return QVariant();
+    }
 //    qDebug() << index << role;
     const QList<Tp::AccountPtr> accounts = m_manager->allAccounts();
     if (accounts.count() <= index) {
@@ -113,6 +99,25 @@ void AccountsModel::createAccount(const QString &connectionManager, const QStrin
     connect(account, &Tp::PendingOperation::finished, [account]() {
         qDebug() << account->errorName() << account->errorMessage();
     });
+}
+
+AccountsModel::Role AccountsModel::getRealRole(const QModelIndex index, int role)
+{
+    Role realRole = InvalidRole;
+
+    if (role >= BaseRole) {
+        realRole = static_cast<Role>(role - BaseRole);
+    } else {
+        switch (role) {
+        case Qt::DisplayRole:
+        case Qt::EditRole:
+            realRole = static_cast<Role>(index.column());
+            break;
+        default:
+            break;
+        }
+    }
+    return realRole;
 }
 
 void AccountsModel::onAMReady(Tp::PendingOperation *operation)

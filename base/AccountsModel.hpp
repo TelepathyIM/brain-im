@@ -37,6 +37,8 @@ public slots:
                        const QVariantMap &properties = QVariantMap());
 
 protected:
+    static Role getRealRole(const QModelIndex index, int role);
+
     QVariant getData(int index, Role role) const;
 
 protected slots:
