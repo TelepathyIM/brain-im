@@ -19,16 +19,26 @@ ScrollablePage {
         width: parent.width
         Repeater {
             id: accountsView
-            model: AccountsModel { }
+            model: AccountsModel { id: accountsModel }
             delegate: ItemDelegate {
                 id: accountsDelegate
                 width: page.width
+                height: 48
                 text: displayName + " (" + cmName + "/" + protocolName + ")"
                 onClicked: {
                     stackView.push("AccountEditor.qml", {
                                        "title": "Accounts/" + displayName
                                    })
                     stackView.currentItem.setAccount(model.uniqueIdentifier)
+                }
+                indicator: CheckBox {
+                    id: enabledBox
+                    x: accountsDelegate.mirrored ? accountsDelegate.leftPadding : accountsDelegate.width - width - accountsDelegate.rightPadding
+                    anchors.baseline: accountsDelegate.contentItem.baseline
+                    checked: model.enabled
+                    onCheckStateChanged: {
+                        model.enabled = checked
+                    }
                 }
             }
         }
