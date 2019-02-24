@@ -20,7 +20,7 @@ ScrollablePage {
             id: accountsView
             delegate: ItemDelegate {
                 id: accountsDelegate
-                width: column.width
+                width: parent.width
                 height: 48
                 text: displayName + " (" + cmName + "/" + protocolName + ")"
                 onClicked: {
