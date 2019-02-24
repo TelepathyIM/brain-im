@@ -96,12 +96,12 @@ ScrollablePage {
                             } else if (t === "b") {
                                 return boolDelegate
                             } else if (t === "s") {
-                                return textDelegate
+                                return stringDelegate
                             }
 
                             console.warn("Fallback to text delegate")
 
-                            return textDelegate
+                            return stringDelegate
                         }
                     }
                 }
@@ -121,36 +121,40 @@ ScrollablePage {
 
         Component {
             id: intDelegate
-            SpinBox {
+            TextField {
+                id: innerIntDelegate
                 signal submit(var value)
+                property alias value: innerIntDelegate.text
                 width: 40
                 height: 48
+                inputMethodHints: Qt.ImhDigitsOnly
+                validator: IntValidator { }
                 onValueChanged: submit(value)
             }
         }
         Component {
-            id: textDelegate
+            id: stringDelegate
             TextField {
-                id: textInnerDelegate
+                id: innerStringDelegate
                 signal submit(var value)
                 property bool secret: false
-                property alias value: textInnerDelegate.text
+                property alias value: innerStringDelegate.text
                 width: 40
                 height: 48
                 selectByMouse: true
-                onTextChanged: submit(text)
                 echoMode: secret ? TextInput.Password : TextInput.Normal
+                onValueChanged: submit(value)
             }
         }
         Component {
             id: boolDelegate
             CheckBox {
+                id: innerBoolDelegate
                 signal submit(var value)
-                property var value
+                property alias value: innerBoolDelegate.checked
                 width: 40
                 height: 48
-                checked: value
-                onTextChanged: submit(checked)
+                onValueChanged: submit(value)
             }
         }
     }
