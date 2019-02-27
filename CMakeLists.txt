@@ -18,10 +18,6 @@ option(ENABLE_QML_CLIENT "Enable QML Client build" FALSE)
 
 option(USE_TELEPATHY "Build with Telepathy support" TRUE)
 
-if (NOT INSTALL_QML_IMPORT_DIR)
-    set(INSTALL_QML_IMPORT_DIR ${CMAKE_INSTALL_LIBDIR}/qt5/qml)
-endif()
-
 find_package(Qt5 CONFIG REQUIRED COMPONENTS
     Core
     DBus
@@ -47,6 +43,10 @@ if (USE_TELEPATHY)
 endif()
 
 include(GNUInstallDirs)
+
+if (NOT INSTALL_QML_IMPORT_DIR)
+    set(INSTALL_QML_IMPORT_DIR ${CMAKE_INSTALL_FULL_LIBDIR}/qt5/qml)
+endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W -Wall -Wextra -std=c++11 -Werror=return-type")
