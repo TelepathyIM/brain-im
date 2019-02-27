@@ -17,7 +17,7 @@ class BRAIN_IM_EXPORT AccountParameterModel : public QAbstractTableModel
     Q_OBJECT
     Q_PROPERTY(QString manager READ manager NOTIFY managerChanged)
     Q_PROPERTY(QString protocol READ protocol NOTIFY protocolChanged)
-    Q_PROPERTY(QString displayName READ displayName NOTIFY displayNameChanged)
+    Q_PROPERTY(QString displayName READ displayName WRITE setDisplayName NOTIFY displayNameChanged)
     Q_PROPERTY(bool creationMode READ creationMode NOTIFY creationModeChanged)
 public:
     enum Role {
@@ -61,6 +61,7 @@ signals:
 public slots:
     void newAccount(const QString &manager, const QString &protocol);
     void setAccount(const QString &uniqueIdentifier);
+    void setDisplayName(const QString &displayName);
     bool submit() override;
 
 protected slots:
@@ -70,7 +71,6 @@ protected:
     void setManager(const QString &manager);
     void setProtocol(const QString &protocol);
     void setProtocolParams(const Tp::ProtocolParameterList &params);
-    void setDisplayName(const QString &displayName);
     void setCreationMode(bool creationMode);
     static Role getRealRole(const QModelIndex index, int role);
     void reinit();

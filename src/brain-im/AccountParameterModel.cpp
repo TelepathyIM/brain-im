@@ -198,6 +198,18 @@ bool AccountParameterModel::submit()
             qDebug() << "AccountParameterModel::submit(): Operation succeeded";
         }
     });
+
+    if (m_displayName != m_account->displayName()) {
+        Tp::PendingOperation *op = m_account->setDisplayName(m_displayName);
+        connect(op, &Tp::PendingOperation::finished, [=](Tp::PendingOperation *operation) {
+            if (operation->isError()) {
+                qWarning() << "AccountParameterModel::submit(): Failed to set display name:" << operation->errorName() << operation->errorMessage();
+            } else {
+                qDebug() << "AccountParameterModel::submit(): Display name updated";
+            }
+        });
+    }
+
     return true;
 }
 
