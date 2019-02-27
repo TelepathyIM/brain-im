@@ -148,7 +148,13 @@ QHash<int, QByteArray> AccountsModel::roleNames() const
 void AccountsModel::createAccount(const QString &connectionManager, const QString &protocol, const QString &displayName, const QVariantMap &parameters, const QVariantMap &properties)
 {
     qDebug() << Q_FUNC_INFO << connectionManager << protocol;
-    Tp::PendingAccount *account = m_manager->createAccount(connectionManager, protocol, displayName, parameters, properties);
+
+    QVariantMap prop = properties;
+    if (m_manager->supportedAccountProperties().contains(QLatin1String("org.freedesktop.Telepathy.Account.Enabled"))) {
+        prop.insert(QLatin1String("org.freedesktop.Telepathy.Account.Enabled"), true);
+    }
+
+    Tp::PendingAccount *account = m_manager->createAccount(connectionManager, protocol, displayName, parameters, prop);
     connect(account, &Tp::PendingOperation::finished, [account]() {
         qDebug() << account->errorName() << account->errorMessage();
     });
