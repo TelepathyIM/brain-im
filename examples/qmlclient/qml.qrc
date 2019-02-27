@@ -3,5 +3,6 @@
         <file>qml/main.qml</file>
         <file>qml/pages/AccountManagement.qml</file>
         <file>qml/pages/IndexPage.qml</file>
+        <file>qml/pages/MainView.qml</file>
     </qresource>
 </RCC>

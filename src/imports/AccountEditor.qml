@@ -20,6 +20,16 @@ ScrollablePage {
         accountParameterModel.setAccount(account)
     }
 
+    function submit()
+    {
+        if (mode === mode_create) {
+            createAccount(accountParameterModel.manager, accountParameterModel.protocol, displayNameEditor.text, accountParameterModel.getVariantMap())
+        } else {
+            accountParameterModel.displayName = displayNameEditor.text
+            accountParameterModel.submit()
+        }
+    }
+
     signal createAccount(string manager, string protocol, string displayName, variant parameters)
 
     property int mode: mode_create
@@ -162,13 +172,6 @@ ScrollablePage {
     footer: Button {
         id: submitButton
         text: page.mode === page.mode_create ? qsTr("Create account") : qsTr("Save")
-        onClicked: {
-            console.log(text)
-            if (page.mode === page.mode_create) {
-                page.createAccount(accountParameterModel.manager, accountParameterModel.protocol, displayNameEditor.text, accountParameterModel.getVariantMap())
-            } else {
-                accountParameterModel.submit()
-            }
-        }
+        onClicked: page.submit()
     }
 }

@@ -31,6 +31,7 @@ ScrollablePage {
                 }
                 indicator: CheckBox {
                     id: enabledBox
+                    padding: 0
                     x: accountsDelegate.mirrored ? accountsDelegate.leftPadding : accountsDelegate.width - width - accountsDelegate.rightPadding
                     anchors.verticalCenter: accountsDelegate.contentItem.verticalCenter
                     checked: model.enabled

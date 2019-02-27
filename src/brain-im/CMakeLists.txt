@@ -8,10 +8,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(base_sources
     Approver.cpp
     Approver.hpp
+    ContactsModel.cpp
+    ContactsModel.hpp
     Entity.cpp
     Entity.hpp
     Event.cpp
     Event.hpp
+    PeersModel.cpp
+    PeersModel.hpp
+    MessagesModel.cpp
+    MessagesModel.hpp
     Types.cpp
     Types.hpp
     global.h
@@ -19,6 +25,9 @@ set(base_sources
 
 if (USE_TELEPATHY)
     set(tp_sources
+        TelepathyMessagesModel.cpp
+        TelepathyMessagesModel.hpp
+
         AccountManager
         AccountManager.cpp
         AccountManager.hpp

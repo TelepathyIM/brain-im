@@ -16,6 +16,7 @@ ScrollablePage {
             model: ListModel {
                 id: indexModel
                 ListElement { title: "Account management"; source: "AccountManagement.qml" }
+                ListElement { title: "IM"; source: "MainView.qml" }
             }
 
             ItemDelegate {

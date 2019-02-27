@@ -3,16 +3,19 @@ import QtQuick.Window 2.2
 import QtQuick.Controls 2.2
 import QtQuick.Controls.Material 2.0
 import QtQuick.Layouts 1.3
+import Qt.labs.settings 1.0
 
 import BrainIM 0.1
 
 import "pages"
 
 ApplicationWindow {
-    id: window
+    id: root
     visible: true
     width: 800
     height: 600
+    minimumWidth: 800
+    minimumHeight: 535
 
     title: "Brain IM"
 
@@ -90,5 +93,18 @@ ApplicationWindow {
     Shortcut {
         sequence: StandardKey.Quit
         onActivated: window.close()
+    }
+
+    Settings {
+        id: uiSettings
+
+        category: "ui"
+
+        property int mainBlockWidth
+
+        property alias x: root.x
+        property alias y: root.y
+        property alias width: root.width
+        property alias height: root.height
     }
 }

@@ -34,8 +34,15 @@ set(qml_SOURCES
     AccountEditor.qml
     AccountView.qml
     ConnectionManagerView.qml
+    DialogDelegate.qml
+    DialogView.qml
+    MessageDelegate.qml
+    MessageEditor.qml
+    MessageToolbar.qml
+    MessageView.qml
     ProtocolView.qml
     ScrollablePage.qml
+    ServiceMessageDelegate.qml
 )
 
 install(TARGETS BrainIMQml DESTINATION ${INSTALL_QML_IMPORT_DIR}/BrainIM)
