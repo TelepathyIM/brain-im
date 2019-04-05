@@ -8,7 +8,7 @@ import BrainIM 0.1
 Page {
     id: mainScreen
 
-    title: contactsModel.getName(mainScreen.peer)
+    title: dialogView.model.getName(mainScreen.peer)
 
     property alias peer: messagesModel.peer
 
@@ -27,7 +27,7 @@ Page {
             id: dialogView
             width: 360
             height: parent.height
-            model: contactsModel
+            model: chatListModel
             onActivateDialog: mainScreen.showDialog(peer)
         }
 
@@ -72,6 +72,9 @@ Page {
         signal draftChanged(string message, var peer)
     }
 
+    ChatsModel {
+        id: chatListModel
+    }
 
     ContactsModel {
         id: contactsModel

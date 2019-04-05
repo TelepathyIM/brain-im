@@ -109,7 +109,13 @@ public:
     {
         return Peer(id, Type::Room);
     }
+
+    QString toString() const
+    {
+        return id;
+    }
 };
+using PeerList = QVector<Peer>;
 
 struct BRAIN_IM_EXPORT Contact
 {

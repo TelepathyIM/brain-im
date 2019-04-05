@@ -7,10 +7,13 @@ AccountView 0.1 AccountView.qml
 ConnectionManagerView 0.1 ConnectionManagerView.qml
 DialogDelegate 0.1 DialogDelegate.qml
 DialogView 0.1 DialogView.qml
+InlineHeader 0.1 InlineHeader.qml
 MessageDelegate 0.1 MessageDelegate.qml
 MessageEditor 0.1 MessageEditor.qml
 MessageToolbar 0.1 MessageToolbar.qml
 MessageView 0.1 MessageView.qml
+PeerPicture 0.1 PeerPicture.qml
 ProtocolView 0.1 ProtocolView.qml
 ScrollablePage 0.1 ScrollablePage.qml
 ServiceMessageDelegate 0.1 ServiceMessageDelegate.qml
+UnreadMessageIndicator 0.1 UnreadMessageIndicator.qml

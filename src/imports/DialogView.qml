@@ -16,6 +16,8 @@ Frame {
         anchors.fill: parent
         spacing: 4
         delegate: DialogDelegate {
+            displayName: model.displayName
+            chatType: model.chatType
             width: listView.width - listView.leftMargin - listView.rightMargin
             onClicked: dialogView.activateDialog(model.peer)
         }

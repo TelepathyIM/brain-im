@@ -1,11 +1,17 @@
-#ifndef CDIALOGMODEL_HPP
-#define CDIALOGMODEL_HPP
+#ifndef BRAIN_IM_DIALOGS_MODEL_HPP
+#define BRAIN_IM_DIALOGS_MODEL_HPP
 
-#include "CPeerModel.hpp"
+#include "global.h"
 
-#include "TelegramNamespace.hpp"
+#include <QList>
+#include <QStringList>
+#include <QSet>
 
-class CDialogModel : public CPeerModel
+#include "PeersModel.hpp"
+
+namespace BrainIM {
+
+class BRAIN_IM_EXPORT DialogsModel : public PeersModel
 {
     Q_OBJECT
 public:
@@ -13,57 +19,80 @@ public:
         PeerType,
         PeerId,
         PeerName,
+        ChatType,
+        IsPinned,
         Picture, // Photo (in terms of Telegram)
+        FormattedLastMessage,
         MuteUntil,
         MuteUntilDate,
-        ColumnsCount
+        Count,
+        Invalid
     };
 
     enum class Role {
-        PeerType,
-        PeerId,
-        PeerName,
+        Peer,
+        DisplayName,
+        ChatType,
+        IsPinned,
         Picture, // Photo (in terms of Telegram)
+        LastMessage,
+        FormattedLastMessage,
         MuteUntil,
         MuteUntilDate,
-        Invalid,
+        UnreadMessageCount,
+        Count,
+        Invalid
     };
 
-    explicit CDialogModel(CTelegramCore *backend, QObject *parent = nullptr);
+    enum ChatType {
+        ChatTypeSelfChat,
+        ChatTypeDialog,
+        ChatTypeGroup,
+        ChatTypeMegaGroup,
+        ChatTypeBroadcast,
+    };
+    Q_ENUM(ChatType)
 
-    bool hasPeer(const Telegram::Peer peer) const override;
-    QString getName(const Telegram::Peer peer) const override;
+    struct ChatEntry {
+        Peer peer;
+        ChatType chatType;
+        QString name;
+        QString formattedLastMessage;
+    };
 
-    void addSourceModel(CPeerModel *peerModel);
+    explicit DialogsModel(QObject *parent = nullptr);
 
-    int columnCount(const QModelIndex &parent = QModelIndex()) const;
-    int rowCount(const QModelIndex &parent = QModelIndex()) const;
+    QHash<int, QByteArray> roleNames() const override;
 
-    Telegram::Peer getPeer(const QModelIndex &index) const;
+    bool hasPeer(const Peer peer) const override;
+    QString getName(const Peer peer) const override;
 
-    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-//    QVariant data(const QString &phone, Section section) const;
-//    QVariant data(quint32 id, Section section) const;
-    QVariant data(int dialogIndex, Role role) const;
+    int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
 
-    int indexOfPeer(const Telegram::Peer peer) const;
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    QVariant getData(int index, Role role) const;
 
 public slots:
-    void setDialogs(const QVector<Telegram::Peer> &dialogs);
-    void syncDialogs(const QVector<Telegram::Peer> &added, const QVector<Telegram::Peer> &removed);
+    void populate();
 
-protected slots:
-    void onPeerPictureChanged(const Telegram::Peer peer);
+Q_SIGNALS:
+    void clientChanged();
 
-protected:
-    static Role columnToRole(Column column, int qtRole);
-    CPeerModel *modelForPeer(const Telegram::Peer peer) const;
+private slots:
+    void onListChanged(const PeerList &added, const PeerList &removed);
+    void addPeer(const Peer &peer);
 
 private:
-    QVector<CPeerModel*> m_sourceModels;
-    QVector<Telegram::DialogInfo*> m_dialogs;
+    ChatType getChatType(const Peer &peer) const;
+    QVariantMap getDialogLastMessageData(const ChatEntry &dialog) const;
+    static Role intToRole(int value);
+    static Column intToColumn(int value);
+    static Role indexToRole(const QModelIndex &index, int role = Qt::DisplayRole);
+    QVector<ChatEntry> m_dialogs;
 
 };
 
-#endif // CDIALOGMODEL_HPP
+} // BrainIM namespace
+
+#endif // TELEGRAMQT_DIALOGS_MODEL_HPP

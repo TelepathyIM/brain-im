@@ -36,13 +36,16 @@ set(qml_SOURCES
     ConnectionManagerView.qml
     DialogDelegate.qml
     DialogView.qml
+    InlineHeader.qml
     MessageDelegate.qml
     MessageEditor.qml
     MessageToolbar.qml
     MessageView.qml
+    PeerPicture.qml
     ProtocolView.qml
     ScrollablePage.qml
     ServiceMessageDelegate.qml
+    UnreadMessageIndicator.qml
 )
 
 install(TARGETS BrainIMQml DESTINATION ${INSTALL_QML_IMPORT_DIR}/BrainIM)

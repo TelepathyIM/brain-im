@@ -8,6 +8,7 @@
 #include "ProtocolsModel.hpp"
 #endif
 #include "ContactsModel.hpp"
+#include "DialogsModel.hpp"
 #include "MessagesModel.hpp"
 #include "Event.hpp"
 
@@ -108,6 +109,7 @@ public:
         qmlRegisterType<AccountParameterModel>(uri, 0, 1, "AccountParameterModel");
 #endif
         qmlRegisterType<MessageSender>(uri, 0, 1, "MessageSender");
+        qmlRegisterType<BrainIM::DialogsModel>(uri, 0, 1, "ChatsModel");
         qmlRegisterType<BrainIM::ContactsModel>(uri, 0, 1, "ContactsModel");
         qmlRegisterType<BrainIM::MessagesModel>(uri, 0, 1, "MessagesModel");
 

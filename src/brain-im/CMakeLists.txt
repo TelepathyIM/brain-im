@@ -10,6 +10,8 @@ set(base_sources
     Approver.hpp
     ContactsModel.cpp
     ContactsModel.hpp
+    DialogsModel.cpp
+    DialogsModel.hpp
     Entity.cpp
     Entity.hpp
     Event.cpp

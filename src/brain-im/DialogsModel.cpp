@@ -1,47 +1,67 @@
-#include "CDialogModel.hpp"
-
-#include "CTelegramCore.hpp"
-#include "Debug.hpp"
+#include "DialogsModel.hpp"
 
 #include <QDateTime>
+#include <QTimer>
 
-CDialogModel::CDialogModel(CTelegramCore *backend, QObject *parent) :
-    CPeerModel(parent)
+#include <QDebug>
+
+//#define CONTACTLIST_AS_DIALOGS
+
+namespace BrainIM {
+
+static const int UserRoleOffset = Qt::UserRole + 1;
+
+DialogsModel::DialogsModel(QObject *parent) :
+    PeersModel(parent)
 {
-    setBackend(backend);
+    QTimer::singleShot(200, this, &DialogsModel::populate);
 }
 
-bool CDialogModel::hasPeer(const Telegram::Peer peer) const
+QHash<int, QByteArray> DialogsModel::roleNames() const
 {
-    return modelForPeer(peer);
+    static const QHash<int, QByteArray> extraRoles {
+        { UserRoleOffset + static_cast<int>(Role::Peer), "peer" },
+        { UserRoleOffset + static_cast<int>(Role::DisplayName), "displayName" },
+        { UserRoleOffset + static_cast<int>(Role::ChatType), "chatType" },
+        { UserRoleOffset + static_cast<int>(Role::IsPinned), "isPinned" },
+        { UserRoleOffset + static_cast<int>(Role::UnreadMessageCount), "unreadMessageCount" },
+        { UserRoleOffset + static_cast<int>(Role::LastMessage), "lastMessage" },
+        { UserRoleOffset + static_cast<int>(Role::FormattedLastMessage), "formattedLastMessage" },
+    };
+
+    return extraRoles;
 }
 
-QString CDialogModel::getName(const Telegram::Peer peer) const
+bool DialogsModel::hasPeer(const Peer peer) const
 {
-    const CPeerModel *model = modelForPeer(peer);
-    if (model) {
-        return model->getName(peer);
-    }
-    return QString();
+    return true;
 }
 
-void CDialogModel::addSourceModel(CPeerModel *peerModel)
+QString DialogsModel::getName(const Peer peer) const
 {
-    m_sourceModels.append(peerModel);
-    connect(peerModel, &CPeerModel::pictureChanged, this, &CDialogModel::onPeerPictureChanged);
-    connect(peerModel, &CPeerModel::nameChanged, this, &CPeerModel::nameChanged);
-    connect(peerModel, &CPeerModel::pictureChanged, this, &CPeerModel::pictureChanged);
+//    if (peer.type == Peer::Type::Contact) {
+//        Telegram::UserInfo info;
+//        if (client->dataStorage()->getUserInfo(&info, peer.id)) {
+//            return info.getBestDisplayName();
+//        }
+//    } else {
+//        Telegram::ChatInfo info;
+//        if (client->dataStorage()->getChatInfo(&info, peer.id)) {
+//            return info.title();
+//        }
+//    }
+    return peer.toString();
 }
 
-int CDialogModel::columnCount(const QModelIndex &parent) const
+int DialogsModel::columnCount(const QModelIndex &parent) const
 {
     if (parent.isValid()) {
         return 0;
     }
-    return static_cast<int>(Column::ColumnsCount);
+    return static_cast<int>(Column::Count);
 }
 
-int CDialogModel::rowCount(const QModelIndex &parent) const
+int DialogsModel::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid()) {
         return 0;
@@ -49,190 +69,177 @@ int CDialogModel::rowCount(const QModelIndex &parent) const
     return m_dialogs.count();
 }
 
-Telegram::Peer CDialogModel::getPeer(const QModelIndex &index) const
+QVariant DialogsModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid() || index.row() > rowCount()) {
-        return Telegram::Peer();
-    }
-    const Telegram::DialogInfo *dialog = m_dialogs.at(index.row());
-    return dialog->peer();
+    const Role r = indexToRole(index, role);
+    return getData(index.row(), r);
 }
 
-QVariant CDialogModel::headerData(int section, Qt::Orientation orientation, int role) const
+QVariant DialogsModel::getData(int index, DialogsModel::Role role) const
 {
-    Column s = static_cast<Column>(section);
-
-    if (orientation != Qt::Horizontal) {
+    if (index < 0 || index >= m_dialogs.count()) {
         return QVariant();
     }
-
-    if (role != Qt::DisplayRole) {
-        return QVariant();
-    }
-
-    switch (s) {
-    case Column::PeerType:
-        return tr("Type");
-    case Column::PeerId:
-        return tr("Id");
-    case Column::PeerName:
-        return tr("Name");
-    case Column::Picture:
-        return tr("Picture");
-    case Column::MuteUntil:
-        return tr("MuteUntil");
-    case Column::MuteUntilDate:
-        return tr("MuteUntilDate");
-    default:
-        break;
-    }
-
-    return QVariant();
-}
-
-QVariant CDialogModel::data(const QModelIndex &index, int role) const
-{
-    switch (role) {
-    case Qt::DisplayRole:
-    case Qt::DecorationRole:
-        break;
-    default:
-        return QVariant();
-    }
-
-    if (!index.isValid()) {
-        return QVariant();
-    }
-
-    if (index.row() >= m_dialogs.count()) {
-        return QVariant();
-    }
-
-    const Column ownColumn = static_cast<Column>(index.column());
-    const Role ownRole = columnToRole(ownColumn, role);
-    if (ownRole == Role::Invalid) {
-        return QVariant();
-    }
-
-    return data(index.row(), ownRole);
-}
-
-QVariant CDialogModel::data(int dialogIndex, CDialogModel::Role role) const
-{
-    const Telegram::DialogInfo *dialog = m_dialogs.at(dialogIndex);
+    const ChatEntry dialog = m_dialogs.at(index);
 
     switch (role) {
-    case Role::PeerType:
-        return dialog->peer().type;
-    case Role::PeerId:
-        return dialog->peer().id;
-    case Role::MuteUntil:
-        return dialog->muteUntil();
-    case Role::MuteUntilDate:
-        if (dialog->muteUntil()) {
-            return QDateTime::fromMSecsSinceEpoch(dialog->muteUntil() * 1000);
-        }
-        return QVariant();
-        // PeerModel roles:
-    case Role::PeerName:
-        return getName(dialog->peer());
+    case Role::Peer:
+        return QVariant::fromValue(dialog.peer);
+    case Role::ChatType:
+        return QVariant::fromValue(dialog.chatType);
+        return static_cast<int>(dialog.chatType);
+    case Role::DisplayName:
+        return dialog.name;
+//    case Role::UnreadMessageCount:
+//        return dialog.internal->unreadCount;
+    case Role::FormattedLastMessage:
+        return dialog.formattedLastMessage;
+    case Role::LastMessage:
+        return getDialogLastMessageData(dialog);
     case Role::Picture:
-        return getPicture(dialog->peer(), Telegram::PeerPictureSize::Small).pixmap;
+    case Role::MuteUntil:
+    case Role::MuteUntilDate:
+        // invalid roles
+    case Role::Count:
+    case Role::Invalid:
+        return QVariant();
     default:
-        break;
+        return QVariant();
     }
+    Q_UNREACHABLE();
     return QVariant();
 }
 
-int CDialogModel::indexOfPeer(const Telegram::Peer peer) const
+QVariantMap DialogsModel::getDialogLastMessageData(const ChatEntry &dialog) const
 {
-    for (int i = 0; i < m_dialogs.count(); ++i) {
-        if (m_dialogs.at(i)->peer() == peer) {
-            return i;
-        }
-    }
-    return -1;
+//    if (dialog.lastChatMessage.id == 0) {
+        return {};
+//    }
+//    const Telegram::Message &lastChatMessage = dialog.lastChatMessage;
+//    QString text;
+//    if (lastChatMessage.type == TelegramNamespace::MessageTypeText) {
+//        text = lastChatMessage.text;
+//    } else {
+//        Telegram::MessageMediaInfo info;
+//        client()->dataStorage()->getMessageMediaInfo(&info, dialog.internal->peer, lastChatMessage.id);
+//        switch (lastChatMessage.type) {
+//        case TelegramNamespace::MessageTypeWebPage:
+//            text = lastChatMessage.text;
+//            //text = info.url();
+//            break;
+//        case TelegramNamespace::MessageTypeSticker:
+//            text = info.alt();
+//            break;
+//        case TelegramNamespace::MessageTypeDocument:
+//            text = info.documentFileName();
+//            break;
+//        default:
+//            text = info.caption();
+//            break;
+//        }
+//    }
+
+//    Telegram::UserInfo userInfo;
+//    client()->dataStorage()->getUserInfo(&userInfo, lastChatMessage.fromId);
+
+//    return {
+//        { "type", static_cast<int>(lastChatMessage.type) },
+//        { "text", text },
+//        { "senderFirstName", userInfo.firstName() },
+//        { "timestamp", QDateTime::fromSecsSinceEpoch(lastChatMessage.timestamp) },
+//        { "flags", static_cast<int>(lastChatMessage.flags / 2) },
+//    };
 }
 
-void CDialogModel::setDialogs(const QVector<Telegram::Peer> &dialogs)
+void DialogsModel::populate()
 {
-    qDebug() << Q_FUNC_INFO << dialogs;
     beginResetModel();
-    qDeleteAll(m_dialogs);
     m_dialogs.clear();
-    for (const Telegram::Peer &peer : dialogs) {
-        Telegram::DialogInfo *info = new Telegram::DialogInfo();
-        m_backend->getDialogInfo(info, peer);
-        m_dialogs.append(info);
+    {
+        ChatEntry c;
+        c.name = QLatin1String("Telepathy IM dev");
+        c.peer = Peer::fromRoomId(QLatin1String("123"));
+        c.chatType = ChatTypeGroup;
+        m_dialogs.append(c);
     }
     endResetModel();
 }
 
-void CDialogModel::syncDialogs(const QVector<Telegram::Peer> &added, const QVector<Telegram::Peer> &removed)
+void DialogsModel::onListChanged(const PeerList &added, const PeerList &removed)
 {
-    Q_UNUSED(removed)
-
-    QVector<Telegram::Peer> reallyAddedDialogs;
-    for (const Telegram::Peer &newPeer : added) {
-        if (indexOfPeer(newPeer) < 0) {
-            reallyAddedDialogs.append(newPeer);
+    if (!removed.isEmpty()) {
+        qWarning() << Q_FUNC_INFO << "Unimplemented argument";
+    }
+    if (!added.isEmpty()) {
+        beginInsertRows(QModelIndex(), m_dialogs.count(), m_dialogs.count() + added.count() - 1);
+        for (const Peer &p : added) {
+            addPeer(p);
         }
+        endInsertRows();
     }
-    if (reallyAddedDialogs.isEmpty()) {
-        return;
-    }
-    beginInsertRows(QModelIndex(), m_dialogs.count(), m_dialogs.count() + reallyAddedDialogs.count() - 1);
-    for (const Telegram::Peer &peer : reallyAddedDialogs) {
-        Telegram::DialogInfo *info = new Telegram::DialogInfo();
-        m_backend->getDialogInfo(info, peer);
-        m_dialogs.append(info);
-    }
-    endInsertRows();
 }
 
-void CDialogModel::onPeerPictureChanged(const Telegram::Peer peer)
+void DialogsModel::addPeer(const Peer &peer)
 {
-    const int i = indexOfPeer(peer);
-    if (i < 0) {
-        return;
-    }
-    const QModelIndex modelIndex = index(i, static_cast<int>(Column::Picture));
-    emit dataChanged(modelIndex, modelIndex);
+//    Client *c = client();
+    ChatEntry d;
+//    DataInternalApi *internalApi = DataInternalApi::get(client()->dataStorage());
+//    UserDialog *dialogData = internalApi->getDialog(peer);
+//    if (!dialogData) {
+//        qWarning() << Q_FUNC_INFO << "Unknown dialog";
+//        return;
+//    }
+//    d.internal = dialogData;
+//    d.chatType = getChatType(peer);
+//    d.name = getPeerAlias(peer, c);
+//    c->dataStorage()->getMessage(&d.lastChatMessage, peer, dialogData->topMessage);
+
+    m_dialogs << d;
 }
 
-CDialogModel::Role CDialogModel::columnToRole(Column column, int qtRole)
+DialogsModel::ChatType DialogsModel::getChatType(const Peer &peer) const
 {
-    if (qtRole == Qt::DecorationRole) {
-        switch (column) {
-        case Column::Picture:
-            return Role::Picture;
-        default:
-            return Role::Invalid;
-        }
+    if (peer.type == Peer::Type::Contact) {
+//        if (peer.id == client()->dataStorage()->selfUserId()) {
+//            return DialogsModel::ChatTypeSelfChat;
+//        }
+        return DialogsModel::ChatTypeDialog;
     }
+//    if (peer.type == Peer::Channel) {
+//        ChatInfo info;
+//        if (client()->dataStorage()->getChatInfo(&info, peer)) {
+//            if (info.broadcast()) {
+//                return DialogsModel::ChatTypeBroadcast;
+//            }
+//        }
+        return DialogsModel::ChatTypeGroup;
+//    }
+//    return DialogsModel::ChatTypeMegaGroup;
+}
 
-    switch (column) {
-    case Column::PeerType:
-        return Role::PeerType;
-    case Column::PeerId:
-        return Role::PeerId;
-    case Column::PeerName:
-        return Role::PeerName;
-    case Column::MuteUntil:
-        return Role::MuteUntil;
-    case Column::MuteUntilDate:
-        return Role::MuteUntilDate;
-    default:
+DialogsModel::Role DialogsModel::intToRole(int value)
+{
+    if (value < 0 || value > static_cast<int>(Role::Count)) {
         return Role::Invalid;
     }
+    return static_cast<Role>(value);
 }
 
-CPeerModel *CDialogModel::modelForPeer(const Telegram::Peer peer) const
+DialogsModel::Column DialogsModel::intToColumn(int value)
 {
-    for (CPeerModel *model : m_sourceModels) {
-        if (model->hasPeer(peer)) {
-            return model;
-        }
+    if (value < 0 || value > static_cast<int>(Column::Count)) {
+        return Column::Invalid;
     }
-    return nullptr;
+    return static_cast<Column>(value);
 }
+
+DialogsModel::Role DialogsModel::indexToRole(const QModelIndex &index, int role)
+{
+    if (role >= UserRoleOffset) {
+        return intToRole(role - UserRoleOffset);
+    }
+    //const Column section = intToColumn(index.column());
+    return Role::Invalid;
+}
+
+} // BrainIM namespace
