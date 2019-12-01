@@ -33,6 +33,7 @@ set(qml_SOURCES
     ProtocolView.qml
     ScrollablePage.qml
 )
+target_sources(BrainIMQml PRIVATE ${qml_SOURCES})
 
 install(TARGETS BrainIMQml DESTINATION ${INSTALL_QML_IMPORT_DIR}/BrainIM)
 install(FILES qmldir plugins.qmltypes DESTINATION ${INSTALL_QML_IMPORT_DIR}/BrainIM)
