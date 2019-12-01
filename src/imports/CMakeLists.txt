@@ -1,5 +1,3 @@
-project(BrainIMQml)
-
 find_package(Qt5 REQUIRED COMPONENTS Core Network DBus Xml Gui Qml Quick)
 
 add_definitions(-DQT_NO_CAST_FROM_ASCII)
@@ -13,25 +11,19 @@ endif()
 
 set(brain_qml_SOURCES plugin.cpp)
 
+add_library(BrainIMQml SHARED ${brain_qml_SOURCES})
+add_library(BrainIM::Qml ALIAS BrainIMQml)
+
 if (USE_TELEPATHY)
-    add_definitions(-DUSE_TELEPATHY)
+    target_compile_definitions(BrainIMQml PRIVATE
+        USE_TELEPATHY
+    )
 endif()
 
-add_library(BrainIMQml SHARED ${brain_qml_SOURCES})
-
-target_include_directories(BrainIMQml PRIVATE
-    ${CMAKE_CURRENT_BINARY_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../brain-im
-)
-
-target_link_libraries(BrainIMQml
-    Qt5::Core
-    Qt5::Gui
-    Qt5::Network
+target_link_libraries(BrainIMQml PUBLIC
     Qt5::Qml
     Qt5::Quick
-    BrainIM
+    BrainIM::Core
 )
 
 set(qml_SOURCES

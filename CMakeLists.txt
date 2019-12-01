@@ -1,12 +1,15 @@
-project(brain_im)
-
 cmake_minimum_required(VERSION 3.3)
 
-set(BRAIN_IM_VERSION_MAJOR 0)
-set(BRAIN_IM_VERSION_MINOR 1)
-set(BRAIN_IM_VERSION_PATCH 0)
+project(brain_im
+    VERSION 0.1.0
+)
 
-set(BRAIN_IM_VERSION "${BRAIN_IM_VERSION_MAJOR}.${BRAIN_IM_VERSION_MINOR}.${BRAIN_IM_VERSION_PATCH}")
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
 
 # Add an option for building tests
 option(ENABLE_TESTS "Enable compilation of automated tests" FALSE)
@@ -36,19 +39,12 @@ find_package(Qt5 CONFIG REQUIRED COMPONENTS
 set(QT_VERSION_MAJOR "5")
 
 if (USE_TELEPATHY)
-    find_package(TelepathyQt5 0.9.7 REQUIRED)
-    if (TelepathyQt5_FOUND)
-        set(TELEPATHY_QT_VERSION ${TELEPATHY_QT5_VERSION})
-        set(TELEPATHY_QT_FOUND ${TelepathyQt5_FOUND})
-        set(TELEPATHY_QT_INSTALL_DIR ${TELEPATHY_QT5_INSTALL_DIR})
-        set(TELEPATHY_QT_INCLUDE_DIR ${TELEPATHY_QT5_INCLUDE_DIR})
-        set(TELEPATHY_QT_LIBRARIES ${TELEPATHY_QT5_LIBRARIES})
-    endif()
+    find_package(TelepathyQt5 0.9.8 COMPONENTS Core Service REQUIRED)
 endif()
 
 include(GNUInstallDirs)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W -Wall -Wextra -std=c++11 -Werror=return-type")
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
@@ -66,5 +62,5 @@ message(STATUS "BrainIM configuration:")
 message(STATUS "  Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 message(STATUS "  Qt: ${Qt5_VERSION} at ${_qt5Core_install_prefix}")
 if (USE_TELEPATHY)
-    message(STATUS "  TelepathyQt: ${TELEPATHY_QT_VERSION} at ${TELEPATHY_QT_INSTALL_DIR}")
+    message(STATUS "  TelepathyQt: ${TELEPATHY_QT5_VERSION}")
 endif()

@@ -1,5 +1,3 @@
-project(QmlClient)
-
 find_package(Qt5 REQUIRED COMPONENTS Core Network DBus Xml Gui Qml Quick QuickControls2)
 
 set(CMAKE_AUTOMOC ON)
@@ -12,34 +10,28 @@ set(brain_qml_SOURCES
     "qml.qrc"
 )
 
-add_executable(brain-im ${brain_qml_SOURCES})
+add_executable(brain-im-client ${brain_qml_SOURCES})
 
-target_include_directories(brain-im PRIVATE
-    ${CMAKE_CURRENT_BINARY_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/brain-im
-
-    ${TELEPATHY_QT_INCLUDE_DIR}
-)
-
-target_link_libraries(brain-im
+target_link_libraries(brain-im-client
     Qt5::Core
     Qt5::Gui
     Qt5::Network
     Qt5::Qml
     Qt5::Quick
     Qt5::QuickControls2
-    BrainIM
+    BrainIM::Core
 )
 
 if (USE_TELEPATHY)
-    add_definitions(-DUSE_TELEPATHY)
-    target_link_libraries(brain-im
-        ${TELEPATHY_QT_LIBRARIES}
+    target_compile_definitions(brain-im-client PRIVATE
+        USE_TELEPATHY
+    )
+    target_link_libraries(brain-im-client
+        TelepathyQt5::Core
     )
 endif()
 
 set(QML_IMPORT_PATH ${INSTALL_QML_IMPORT_DIR})
 
-message(STATUS "Hint: Add 'QML2_IMPORT_PATH=\${CMAKE_INSTALL_FULL_LIBDIR}/qt5/qml\' "
+message(STATUS "Hint: Add QML2_IMPORT_PATH=${CMAKE_INSTALL_FULL_LIBDIR}/qt5/qml "
     "to 'brain-im' run enviroment variables to ensure that the QML import is correct.")

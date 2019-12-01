@@ -1,10 +1,3 @@
-project(BrainIM)
-
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 set(base_sources
     Approver.cpp
     Approver.hpp
@@ -18,7 +11,7 @@ set(base_sources
 )
 
 if (USE_TELEPATHY)
-    set(tp_sources
+    list(APPEND base_sources
         AccountManager
         AccountManager.cpp
         AccountManager.hpp
@@ -46,20 +39,25 @@ if (USE_TELEPATHY)
         ProtocolsModel.cpp
         ProtocolsModel.hpp
     )
-    list(APPEND base_sources
-        ${tp_sources}
-    )
-    add_definitions(-DUSE_TELEPATHY)
 endif()
 
-add_definitions(-DBRAIN_IM_LIBRARY)
 add_library(BrainIM SHARED ${base_sources})
+add_library(BrainIM::Core ALIAS BrainIM)
 
-target_include_directories(BrainIM PRIVATE
-    ${CMAKE_CURRENT_BINARY_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}
+set_target_properties(BrainIM
+    PROPERTIES
+    DEFINE_SYMBOL "BRAIN_IM_LIBRARY"
+)
 
-    ${TELEPATHY_QT_INCLUDE_DIR}
+if (USE_TELEPATHY)
+    target_compile_definitions(BrainIM PRIVATE
+        USE_TELEPATHY
+    )
+endif()
+
+target_include_directories(BrainIM PUBLIC
+    $<INSTALL_INTERFACE:${TELEGRAM_QT_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 
 target_link_libraries(BrainIM
@@ -69,8 +67,7 @@ target_link_libraries(BrainIM
     Qt5::Network
     Qt5::Qml
     Qt5::Quick
-    ${TELEPATHY_QT_LIBRARIES}
-    -lstdc++
+    TelepathyQt5::Core
 )
 
 set(BRAIN_IM_INCLUDE_DIR ${CMAKE_INSTALL_FULL_INCLUDEDIR}/BrainIM)
