@@ -213,6 +213,9 @@ void AccountsModel::onAMReady(Tp::PendingOperation *operation)
     }
     beginResetModel();
     m_accounts = m_manager->allAccounts();
+    std::sort(m_accounts.begin(), m_accounts.end(), [](const Tp::AccountPtr &account1, const Tp::AccountPtr &account2) {
+        return account1->displayName().compare(account2->displayName(), Qt::CaseInsensitive) < 0;
+    });
     endResetModel();
 }
 
