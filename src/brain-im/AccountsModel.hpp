@@ -25,6 +25,12 @@ public:
         RolesCount,
         InvalidRole
     };
+    enum class Column {
+        Name,
+        Enabled,
+        Count,
+        Invalid,
+    };
 
     explicit AccountsModel(QObject *parent = nullptr);
 
@@ -44,7 +50,8 @@ public slots:
                        const QVariantMap &properties = QVariantMap());
 
 protected:
-    static Role getRealRole(const QModelIndex index, int role);
+    static Role intToRole(int value);
+    virtual Role indexToRole(const QModelIndex &index, int role = Qt::DisplayRole) const;
 
     QVariant getData(int index, Role role) const;
     bool setData(int index, Role role, const QVariant &value);

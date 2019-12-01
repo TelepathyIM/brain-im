@@ -5,7 +5,7 @@
 
 #include <QDebug>
 
-static const int BaseRole = Qt::UserRole + 1;
+static const int UserRoleOffset = Qt::UserRole + 1;
 
 AccountsModel::AccountsModel(QObject *parent) :
     QAbstractTableModel(parent)
@@ -33,7 +33,7 @@ int AccountsModel::columnCount(const QModelIndex &parent) const
     if (parent.isValid()) {
         return 0;
     }
-    return RolesCount;
+    return static_cast<int>(Column::Count);
 }
 
 QVariant AccountsModel::data(const QModelIndex &index, int role) const
@@ -41,19 +41,19 @@ QVariant AccountsModel::data(const QModelIndex &index, int role) const
     if (!index.isValid()) {
         return QVariant();
     }
-    return getData(index.row(), getRealRole(index, role));
+    return getData(index.row(), indexToRole(index, role));
 }
 
 bool AccountsModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    return setData(index.row(), getRealRole(index, role), value);
+    return setData(index.row(), indexToRole(index, role), value);
 }
 
 Qt::ItemFlags AccountsModel::flags(const QModelIndex &index) const
 {
     // We have no role here, but it is OK because declarative viewes ignore it eitherway.
     // This method makes sense only for roles selected by column
-    const Role realRole = getRealRole(index, Qt::DisplayRole);
+    const Role realRole = indexToRole(index, Qt::DisplayRole);
     switch (realRole) {
     case Enabled:
         return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
@@ -127,19 +127,19 @@ bool AccountsModel::setData(int index, AccountsModel::Role role, const QVariant 
 QHash<int, QByteArray> AccountsModel::roleNames() const
 {
     static const QHash<int, QByteArray> extraRoles {
-        { BaseRole + AccountObject,
+        { UserRoleOffset + AccountObject,
                     "accountObject" },
-        { BaseRole + DisplayName,
+        { UserRoleOffset + DisplayName,
                     "displayName" },
-        { BaseRole + Enabled,
+        { UserRoleOffset + Enabled,
                     "enabled" },
-        { BaseRole + CmName,
+        { UserRoleOffset + CmName,
                     "cmName" },
-        { BaseRole + ProtocolName,
+        { UserRoleOffset + ProtocolName,
                     "protocolName" },
-        { BaseRole + ServiceName,
+        { UserRoleOffset + ServiceName,
                     "serviceName" },
-        { BaseRole + UniqueIdentifier,
+        { UserRoleOffset + UniqueIdentifier,
                     "uniqueIdentifier" },
     };
     return extraRoles;
@@ -154,23 +154,52 @@ void AccountsModel::createAccount(const QString &connectionManager, const QStrin
     });
 }
 
-AccountsModel::Role AccountsModel::getRealRole(const QModelIndex index, int role)
+AccountsModel::Role AccountsModel::intToRole(int value)
 {
-    Role realRole = InvalidRole;
-
-    if (role >= BaseRole) {
-        realRole = static_cast<Role>(role - BaseRole);
-    } else {
-        switch (role) {
-        case Qt::DisplayRole:
-        case Qt::EditRole:
-            realRole = static_cast<Role>(index.column());
-            break;
-        default:
-            break;
-        }
+    if (value < 0 || value > static_cast<int>(Role::RolesCount)) {
+        return Role::InvalidRole;
     }
-    return realRole;
+    return static_cast<Role>(value);
+}
+
+AccountsModel::Role AccountsModel::indexToRole(const QModelIndex &index, int role) const
+{
+    Q_UNUSED(index)
+    if (role >= UserRoleOffset) {
+        return intToRole(role - UserRoleOffset);
+    }
+
+    Column column = static_cast<Column>(index.column());
+    switch (column) {
+    case Column::Name:
+        return Role::DisplayName;
+    case Column::Enabled:
+        return Role::Enabled;
+    case Column::Count:
+    case Column::Invalid:
+        // Invalid call
+        return Role::InvalidRole;
+    }
+
+//    return Role::InvalidRole;
+
+//    Role realRole = InvalidRole;
+
+//    if (role >= BaseRole) {
+//        realRole = static_cast<Role>(role - BaseRole);
+//    } else {
+//        switch (role) {
+//        case Qt::DisplayRole:
+//        case Qt::EditRole:
+//            realRole = static_cast<Role>(index.column());
+//            break;
+//        default:
+//            break;
+//        }
+//    }
+//    return realRole;
+    Q_UNREACHABLE();
+    return Role::InvalidRole;
 }
 
 void AccountsModel::onAMReady(Tp::PendingOperation *operation)
