@@ -18,7 +18,7 @@
 #ifndef BRAIN_IM_EVENT_HPP
 #define BRAIN_IM_EVENT_HPP
 
-#include "global.h"
+#include "brain_im_global.h"
 
 #include "Types.hpp"
 

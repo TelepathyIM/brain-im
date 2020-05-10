@@ -7,7 +7,7 @@ set(base_sources
     Event.hpp
     Types.cpp
     Types.hpp
-    global.h
+    brain_im_global.h
 )
 
 if (USE_TELEPATHY)

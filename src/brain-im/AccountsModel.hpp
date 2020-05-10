@@ -1,7 +1,7 @@
 #ifndef BRAIN_IM_ACCOUNTS_MODEL
 #define BRAIN_IM_ACCOUNTS_MODEL
 
-#include "global.h"
+#include "brain_im_global.h"
 
 #include <QAbstractTableModel>
 

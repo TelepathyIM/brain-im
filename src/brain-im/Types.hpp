@@ -1,7 +1,7 @@
 #ifndef BRAIN_TYPES
 #define BRAIN_TYPES
 
-#include "global.h"
+#include "brain_im_global.h"
 
 #ifdef USE_TELEPATHY
 #include <TelepathyQt/Constants>
