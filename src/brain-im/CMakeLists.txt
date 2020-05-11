@@ -12,30 +12,18 @@ set(base_sources
 
 if (USE_TELEPATHY)
     list(APPEND base_sources
-        AccountManager
         AccountManager.cpp
         AccountManager.hpp
-
-        AccountsModel
         AccountsModel.cpp
         AccountsModel.hpp
-
-        AccountParameterModel
         AccountParameterModel.cpp
         AccountParameterModel.hpp
-
-        ConnectionManagersModel
         ConnectionManagersModel.cpp
         ConnectionManagersModel.hpp
-
         Core.cpp
         Core.hpp
-
-        DBusServiceHelper
         DBusServiceHelper.cpp
         DBusServiceHelper.hpp
-
-        ProtocolsModel
         ProtocolsModel.cpp
         ProtocolsModel.hpp
     )
