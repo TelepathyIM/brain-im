@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.3)
 
-project(brain_im
+project(BrainIM
     VERSION 0.1.0
 )
 
