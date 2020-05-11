@@ -2,9 +2,9 @@
 #include <QtQml/qqml.h>
 
 #ifdef USE_TELEPATHY
-#include "AccountsModel"
-#include "AccountParameterModel"
-#include "ConnectionManagersModel"
+#include "AccountParameterModel.hpp"
+#include "ConnectionManagersModel.hpp"
+#include "DeclarativeAccountsModel.hpp"
 #include "ProtocolsModel.hpp"
 #endif
 #include "Event.hpp"

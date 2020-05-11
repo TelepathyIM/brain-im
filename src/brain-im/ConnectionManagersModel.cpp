@@ -1,6 +1,6 @@
 #include "ConnectionManagersModel.hpp"
 
-#include "DBusServiceHelper"
+#include "DBusServiceHelper.hpp"
 
 #include <TelepathyQt/ConnectionManager>
 

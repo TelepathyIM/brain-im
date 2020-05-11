@@ -6,9 +6,9 @@
 #ifdef USE_TELEPATHY
 #include <TelepathyQt/Types>
 
-#include "AccountsModel"
-#include "AccountParameterModel"
-#include "ConnectionManagersModel"
+#include "AccountsModel.hpp"
+#include "AccountParameterModel.hpp"
+#include "ConnectionManagersModel.hpp"
 #include "ProtocolsModel.hpp"
 #endif
 
