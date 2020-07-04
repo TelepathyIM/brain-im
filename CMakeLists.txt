@@ -55,6 +55,12 @@ add_subdirectory(src/brain-im)
 
 if (ENABLE_QML)
     add_subdirectory(src/imports/BrainIM)
+    set(QML_IMPORT_PATH
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/imports
+        CACHE
+        STRING "QML Import path for IDE code model"
+        FORCE
+    )
 endif()
 
 if (ENABLE_QML_CLIENT)
