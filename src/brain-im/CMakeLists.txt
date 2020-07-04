@@ -29,6 +29,17 @@ if (USE_TELEPATHY)
     )
 endif()
 
+set(public_HEADERS
+    AccountManager.hpp
+    AccountParameterModel.hpp
+    AccountsModel.hpp
+    ConnectionManagersModel.hpp
+    Core.hpp
+    DBusServiceHelper.hpp
+    ProtocolsModel.hpp
+    brain_im_global.h
+)
+
 add_library(BrainIM SHARED ${base_sources})
 add_library(BrainIM::Core ALIAS BrainIM)
 
@@ -58,7 +69,6 @@ target_link_libraries(BrainIM
     TelepathyQt5::Core
 )
 
-set(BRAIN_IM_INCLUDE_DIR ${CMAKE_INSTALL_FULL_INCLUDEDIR}/BrainIM)
 set(BRAIN_IM_LIB_DIR ${CMAKE_INSTALL_FULL_LIBDIR})
 
 install(
@@ -66,4 +76,16 @@ install(
     LIBRARY DESTINATION ${BRAIN_IM_LIB_DIR}
     ARCHIVE DESTINATION ${BRAIN_IM_LIB_DIR}
     COMPONENT Library
+)
+
+install(
+    FILES ${public_HEADERS}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/BrainIM
+    COMPONENT Devel
+)
+
+install(
+    DIRECTORY BrainIM
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    COMPONENT Devel
 )
