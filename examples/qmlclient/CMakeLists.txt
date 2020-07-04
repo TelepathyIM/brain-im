@@ -33,5 +33,7 @@ endif()
 
 set(QML_IMPORT_PATH ${INSTALL_QML_IMPORT_DIR})
 
+message(STATUS "Hint: The qmlclient example requires complete installation. Ensure that you have"
+    " built CMake target 'install'")
 message(STATUS "Hint: Add QML2_IMPORT_PATH=${CMAKE_INSTALL_FULL_LIBDIR}/qt5/qml "
     "to 'brain-im' run enviroment variables to ensure that the QML import is correct.")
