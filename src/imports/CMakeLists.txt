@@ -9,7 +9,11 @@ if (NOT INSTALL_QML_IMPORT_DIR)
     set(INSTALL_QML_IMPORT_DIR ${CMAKE_INSTALL_LIBDIR}/qt5/qml)
 endif()
 
-set(brain_qml_SOURCES plugin.cpp)
+set(brain_qml_SOURCES
+    DeclarativeAccountsModel.cpp
+    DeclarativeAccountsModel.hpp
+    plugin.cpp
+)
 
 add_library(BrainIMQml SHARED ${brain_qml_SOURCES})
 add_library(BrainIM::Qml ALIAS BrainIMQml)

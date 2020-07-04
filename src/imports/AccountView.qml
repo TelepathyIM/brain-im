@@ -22,20 +22,24 @@ ScrollablePage {
                 id: accountsDelegate
                 width: parent.width
                 height: 48
-                text: displayName + " (" + cmName + "/" + protocolName + ")"
+
+                property string accountId: model.accountId
+                property bool accountEnabled: model.accountEnabled
+                property string displayName: model.displayName || qsTr("<no name>")
+                text: displayName + " (" + managerName + "/" + protocolName + ")"
                 onClicked: {
                     stackView.push("AccountEditor.qml", {
                                        "title": "Accounts/" + displayName
                                    })
-                    stackView.currentItem.setAccount(model.uniqueIdentifier)
+                    stackView.currentItem.setAccount(accountsDelegate.accountId)
                 }
                 indicator: CheckBox {
                     id: enabledBox
                     x: accountsDelegate.mirrored ? accountsDelegate.leftPadding : accountsDelegate.width - width - accountsDelegate.rightPadding
                     anchors.verticalCenter: accountsDelegate.contentItem.verticalCenter
-                    checked: model.enabled
-                    onCheckStateChanged: {
-                        model.enabled = checked
+                    checked: accountsDelegate.accountEnabled
+                    onToggled: {
+                        page.model.setAccountEnabled(accountsDelegate.accountId, enabledBox.checked)
                     }
                 }
             }

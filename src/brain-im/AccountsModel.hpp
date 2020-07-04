@@ -14,55 +14,84 @@ class BRAIN_IM_EXPORT AccountsModel : public QAbstractTableModel
 {
     Q_OBJECT
 public:
-    enum Role {
-        AccountObject,
+    enum class Role {
+        AccountId,
         DisplayName,
-        Enabled,
+        AccountEnabled,
+        AccountValid,
         CmName,
         ProtocolName,
         ServiceName,
-        UniqueIdentifier,
+        AccountObject,
         RolesCount,
-        InvalidRole
+        Invalid
     };
+    Q_ENUM(Role)
     enum class Column {
-        Name,
+        UniqueIdentifier,
+        DisplayName,
         Enabled,
-        Count,
+        Valid,
         Invalid,
     };
+    Q_ENUM(Column)
 
     explicit AccountsModel(QObject *parent = nullptr);
 
+    void init(const Tp::AccountManagerPtr &accountManager = Tp::AccountManagerPtr());
+    void invalidateFilter();
+
+    QList<Tp::AccountPtr> accounts() const;
+
+    QVector<Column> columns() const;
+    void setColumns(const QVector<Column> &columns);
+
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
-    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::DisplayRole) override;
 
-    Qt::ItemFlags flags(const QModelIndex &index) const override;
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    QVariant getData(int index, Role role) const;
 
     QHash<int, QByteArray> roleNames() const override;
+
+    Q_INVOKABLE Tp::AccountPtr getAccount(const QString &identifier) const;
 
 public slots:
     void createAccount(const QString &connectionManager,
                        const QString &protocol, const QString &displayName,
                        const QVariantMap &parameters,
                        const QVariantMap &properties = QVariantMap());
+    void setAccountEnabled(const QString &accountId, bool enabled);
 
 protected:
+    void setAccountManager(const Tp::AccountManagerPtr &accountManager);
+    void setAccounts(const QList<Tp::AccountPtr> &accounts);
+
     static Role intToRole(int value);
+    static int roleToInt(Role role);
+    static int roleToUserRole(Role role);
     virtual Role indexToRole(const QModelIndex &index, int role = Qt::DisplayRole) const;
 
-    QVariant getData(int index, Role role) const;
-    bool setData(int index, Role role, const QVariant &value);
+    void updateAccountData(const Tp::AccountPtr &account, Role role);
+
+    virtual bool filterAcceptAccount(const Tp::AccountPtr &account) const;
+    virtual void sortAccounts(QList<Tp::AccountPtr> *accounts) const;
 
 protected slots:
     void onAMReady(Tp::PendingOperation *operation);
     void onNewAccount(const Tp::AccountPtr &account);
 
+    void onAccountRemoved();
+    void onAccountStateChanged();
+    void onAccountValidityChanged();
+
+    void trackAccount(const Tp::AccountPtr &account);
+    void stopTrackingAccount(const Tp::AccountPtr &account);
+
 protected:
     Tp::AccountManagerPtr m_manager;
     QList<Tp::AccountPtr> m_accounts;
+    QVector<Column> m_columns;
 
 };
 

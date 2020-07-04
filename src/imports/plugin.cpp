@@ -34,7 +34,7 @@ public:
         Q_ASSERT(QByteArray(uri) == QByteArray("BrainIM"));
 
 #ifdef USE_TELEPATHY
-        qmlRegisterType<AccountsModel>(uri, 0, 1, "AccountsModel");
+        qmlRegisterType<DeclarativeAccountsModel>(uri, 0, 1, "AccountsModel");
         qmlRegisterType<ConnectionManagersModel>(uri, 0, 1, "ConnectionManagersModel");
         qmlRegisterType<ProtocolsModel>(uri, 0, 1, "ProtocolsModel");
         qmlRegisterType<AccountParameterModel>(uri, 0, 1, "AccountParameterModel");

@@ -3,18 +3,135 @@
 #include <TelepathyQt/Account>
 #include <TelepathyQt/PendingAccount>
 
-#include <QDebug>
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(lcAccountsModel, "app.accountsModel", QtDebugMsg)
 
 static const int UserRoleOffset = Qt::UserRole + 1;
+
+/**
+ * \class AccountsModel
+ *
+ * Default implementation currently provides read-only access to the accounts.
+ *
+ * Usage:
+ * -# Call setColumns() to customize the wanted columns. (Only account ID column exposed by default)
+ * -# Call init(). Pass Tp::AccountManager to reuse an existing manager or give no arguments so
+ *    the model construct its own AccountManager.
+ *
+ * Subclassing:
+ * -# Override sortAccounts() to customize the accounts order.
+ * -# Override filterAcceptAccount() to filter out certain accounts.
+ */
 
 AccountsModel::AccountsModel(QObject *parent) :
     QAbstractTableModel(parent)
 {
-    m_manager = Tp::AccountManager::create(Tp::AccountFactory::create(QDBusConnection::sessionBus(),
-                                                                      Tp::Account::FeatureCore));
+    m_columns = {
+        Column::UniqueIdentifier,
+    };
+}
 
-    connect(m_manager->becomeReady(), &Tp::PendingOperation::finished, this, &AccountsModel::onAMReady);
-    connect(m_manager.data(), &Tp::AccountManager::newAccount, this, &AccountsModel::onNewAccount);
+void AccountsModel::init(const Tp::AccountManagerPtr &accountManager)
+{
+    if (accountManager) {
+        setAccountManager(accountManager);
+    } else {
+        const Tp::Features accountFeatures = Tp::Account::FeatureCore | Tp::Account::FeatureProtocolInfo;
+        Tp::AccountFactoryPtr accountFactory = Tp::AccountFactory::create(QDBusConnection::sessionBus(),
+                                                                          accountFeatures);
+        setAccountManager(Tp::AccountManager::create(accountFactory));
+    }
+}
+
+void AccountsModel::invalidateFilter()
+{
+    if (!m_manager) {
+        return;
+    }
+    setAccounts(m_manager->allAccounts());
+}
+
+QList<Tp::AccountPtr> AccountsModel::accounts() const
+{
+    return m_accounts;
+}
+
+void AccountsModel::setAccounts(const QList<Tp::AccountPtr> &accounts)
+{
+    QList<Tp::AccountPtr> newAccounts;
+    for (const Tp::AccountPtr &account : accounts) {
+        if (!filterAcceptAccount(account)) {
+            continue;
+        }
+        newAccounts << account;
+    }
+    sortAccounts(&newAccounts);
+
+    if (m_accounts == newAccounts) {
+        return;
+    }
+
+    for (const Tp::AccountPtr &trackedAccount : m_accounts) {
+        if (!newAccounts.contains(trackedAccount)) {
+            stopTrackingAccount(trackedAccount);
+        }
+    }
+    for (const Tp::AccountPtr &newAccount : newAccounts) {
+        if (!m_accounts.contains(newAccount)) {
+            trackAccount(newAccount);
+        }
+    }
+
+    if (m_accounts.isEmpty()) {
+        // Fast path to add all accounts
+        beginInsertRows(QModelIndex(), 0, newAccounts.count() - 1);
+        m_accounts = newAccounts;
+        endInsertRows();
+        return;
+    } else if (newAccounts.isEmpty()) {
+        // Fast path to remove all accounts
+        beginRemoveRows(QModelIndex(), 0, m_accounts.count() - 1);
+        m_accounts.clear();
+        endRemoveRows();
+        return;
+    }
+
+    for (int accountIndex = m_accounts.count() - 1; accountIndex > 0; --accountIndex) {
+        const Tp::AccountPtr &account = m_accounts.at(accountIndex);
+        if (!newAccounts.contains(account)) {
+            beginRemoveRows(QModelIndex(), accountIndex, accountIndex);
+            m_accounts.removeAt(accountIndex);
+            endRemoveRows();
+        }
+    }
+
+    for (int accountIndex = 0; accountIndex < newAccounts.count(); ++accountIndex) {
+        const Tp::AccountPtr &account = newAccounts.at(accountIndex);
+        int currentIndex = m_accounts.indexOf(account);
+        if (currentIndex != accountIndex) {
+            if (currentIndex < 0) {
+                beginInsertRows(QModelIndex(), accountIndex, accountIndex);
+                m_accounts.insert(accountIndex, account);
+                endInsertRows();
+            } else {
+                beginMoveRows(QModelIndex(), currentIndex, currentIndex,
+                              QModelIndex(), accountIndex);
+                m_accounts.move(currentIndex, accountIndex);
+                endMoveRows();
+            }
+        }
+    }
+}
+
+QVector<AccountsModel::Column> AccountsModel::columns() const
+{
+    return m_columns;
+}
+
+void AccountsModel::setColumns(const QVector<AccountsModel::Column> &columns)
+{
+    m_columns = columns;
 }
 
 int AccountsModel::rowCount(const QModelIndex &parent) const
@@ -22,10 +139,7 @@ int AccountsModel::rowCount(const QModelIndex &parent) const
     if (parent.isValid()) {
         return 0;
     }
-
-    const QList<Tp::AccountPtr> accounts = m_manager->allAccounts();
-
-    return accounts.count();
+    return m_accounts.count();
 }
 
 int AccountsModel::columnCount(const QModelIndex &parent) const
@@ -33,7 +147,7 @@ int AccountsModel::columnCount(const QModelIndex &parent) const
     if (parent.isValid()) {
         return 0;
     }
-    return static_cast<int>(Column::Count);
+    return m_columns.count();
 }
 
 QVariant AccountsModel::data(const QModelIndex &index, int role) const
@@ -44,28 +158,9 @@ QVariant AccountsModel::data(const QModelIndex &index, int role) const
     return getData(index.row(), indexToRole(index, role));
 }
 
-bool AccountsModel::setData(const QModelIndex &index, const QVariant &value, int role)
-{
-    return setData(index.row(), indexToRole(index, role), value);
-}
-
-Qt::ItemFlags AccountsModel::flags(const QModelIndex &index) const
-{
-    // We have no role here, but it is OK because declarative viewes ignore it eitherway.
-    // This method makes sense only for roles selected by column
-    const Role realRole = indexToRole(index, Qt::DisplayRole);
-    switch (realRole) {
-    case Enabled:
-        return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
-    default:
-        break;
-    }
-    return QAbstractTableModel::flags(index);
-}
-
 QVariant AccountsModel::getData(int index, Role role) const
 {
-    if (role == InvalidRole) {
+    if (role == Role::Invalid) {
         return QVariant();
     }
     if (m_accounts.count() <= index) {
@@ -75,131 +170,163 @@ QVariant AccountsModel::getData(int index, Role role) const
     const Tp::AccountPtr account = m_accounts.at(index);
 
     switch (role) {
-    case AccountObject:
+    case Role::AccountObject:
         return QVariant::fromValue<QObject*>(account.data());
-    case CmName:
+    case Role::CmName:
         return account->cmName();
-    case Enabled:
+    case Role::AccountEnabled:
         return account->isEnabled();
-    case DisplayName:
+    case Role::AccountValid:
+        return account->isValidAccount();
+    case Role::DisplayName:
         return account->displayName();
-    case ProtocolName:
+    case Role::ProtocolName:
         return account->protocolName();
-    case ServiceName:
+    case Role::ServiceName:
         return account->serviceName();
-    case UniqueIdentifier:
-        //return account->uniqueIdentifier();
-        return account->objectPath();
-    default:
+    case Role::AccountId:
+        return account->uniqueIdentifier();
+    case Role::RolesCount:
+    case Role::Invalid:
         return QVariant();
     }
-}
 
-bool AccountsModel::setData(int index, AccountsModel::Role role, const QVariant &value)
-{
-    if (role == InvalidRole) {
-        return false;
-    }
-    qWarning() << Q_FUNC_INFO << index << role << value;
-
-    const QList<Tp::AccountPtr> accounts = m_manager->allAccounts();
-    if (accounts.count() <= index) {
-        return false;
-    }
-    const Tp::AccountPtr account = accounts.at(index);
-
-    switch (role) {
-    case Enabled:
-        if (account->isEnabled() == value.toBool()) {
-            // Not changed
-            return false;
-        } else {
-            Tp::PendingOperation *enablement = account->setEnabled(value.toBool());
-            Q_UNUSED(enablement)
-            return true;
-        }
-    default:
-        break;
-    }
-    return false;
+    return QVariant();
 }
 
 QHash<int, QByteArray> AccountsModel::roleNames() const
 {
     static const QHash<int, QByteArray> extraRoles {
-        { UserRoleOffset + AccountObject,
-                    "accountObject" },
-        { UserRoleOffset + DisplayName,
-                    "displayName" },
-        { UserRoleOffset + Enabled,
-                    "enabled" },
-        { UserRoleOffset + CmName,
-                    "cmName" },
-        { UserRoleOffset + ProtocolName,
-                    "protocolName" },
-        { UserRoleOffset + ServiceName,
-                    "serviceName" },
-        { UserRoleOffset + UniqueIdentifier,
-                    "uniqueIdentifier" },
+        { roleToUserRole(Role::AccountId), "accountId" },
+        { roleToUserRole(Role::DisplayName), "displayName" },
+        { roleToUserRole(Role::AccountEnabled), "accountEnabled" },
+        { roleToUserRole(Role::AccountValid), "accountValid" },
+        { roleToUserRole(Role::CmName), "managerName" },
+        { roleToUserRole(Role::ProtocolName), "protocolName" },
+        { roleToUserRole(Role::ServiceName), "serviceName" },
+        { roleToUserRole(Role::AccountObject), "accountObject" },
     };
     return extraRoles;
 }
 
-void AccountsModel::createAccount(const QString &connectionManager, const QString &protocol, const QString &displayName, const QVariantMap &parameters, const QVariantMap &properties)
+Tp::AccountPtr AccountsModel::getAccount(const QString &identifier) const
+{
+    for (const Tp::AccountPtr &account : m_accounts) {
+        if (account->uniqueIdentifier() == identifier) {
+            return account;
+        }
+    }
+
+    return Tp::AccountPtr();
+}
+
+void AccountsModel::createAccount(const QString &connectionManager,
+                                  const QString &protocol,
+                                  const QString &displayName,
+                                  const QVariantMap &parameters,
+                                  const QVariantMap &properties)
 {
     qDebug() << Q_FUNC_INFO << connectionManager << protocol;
-    Tp::PendingAccount *account = m_manager->createAccount(connectionManager, protocol, displayName, parameters, properties);
+    Tp::PendingAccount *account = m_manager->createAccount(connectionManager, protocol,
+                                                           displayName, parameters, properties);
     connect(account, &Tp::PendingOperation::finished, [account]() {
         qDebug() << account->errorName() << account->errorMessage();
     });
 }
 
+void AccountsModel::setAccountEnabled(const QString &accountId, bool enabled)
+{
+    Tp::AccountPtr account = getAccount(accountId);
+    if (!account) {
+        return;
+    }
+    setAccountEnabled(account, enabled);
+}
+
+void AccountsModel::setAccountManager(const Tp::AccountManagerPtr &accountManager)
+{
+    m_manager = accountManager;
+    connect(m_manager->becomeReady(), &Tp::PendingOperation::finished, this, &AccountsModel::onAMReady);
+    connect(m_manager.data(), &Tp::AccountManager::newAccount, this, &AccountsModel::onNewAccount);
+}
+
 AccountsModel::Role AccountsModel::intToRole(int value)
 {
     if (value < 0 || value > static_cast<int>(Role::RolesCount)) {
-        return Role::InvalidRole;
+        return Role::Invalid;
     }
     return static_cast<Role>(value);
 }
 
+int AccountsModel::roleToInt(AccountsModel::Role role)
+{
+    return static_cast<int>(role);
+}
+
+int AccountsModel::roleToUserRole(AccountsModel::Role role)
+{
+    return roleToInt(role) + UserRoleOffset;
+}
+
 AccountsModel::Role AccountsModel::indexToRole(const QModelIndex &index, int role) const
 {
-    Q_UNUSED(index)
     if (role >= UserRoleOffset) {
         return intToRole(role - UserRoleOffset);
     }
 
-    Column column = static_cast<Column>(index.column());
-    switch (column) {
-    case Column::Name:
-        return Role::DisplayName;
-    case Column::Enabled:
-        return Role::Enabled;
-    case Column::Count:
-    case Column::Invalid:
-        // Invalid call
-        return Role::InvalidRole;
+    if (index.column() >= m_columns.count()) {
+        return Role::Invalid;
     }
 
-//    return Role::InvalidRole;
+    Column column = m_columns.at(index.column());
 
-//    Role realRole = InvalidRole;
+    switch (role) {
+    case Qt::DisplayRole:
+    case Qt::EditRole:
+        break;
+    default:
+        return Role::Invalid;
+    }
 
-//    if (role >= BaseRole) {
-//        realRole = static_cast<Role>(role - BaseRole);
-//    } else {
-//        switch (role) {
-//        case Qt::DisplayRole:
-//        case Qt::EditRole:
-//            realRole = static_cast<Role>(index.column());
-//            break;
-//        default:
-//            break;
-//        }
-//    }
-//    return realRole;
+    switch (column) {
+    case Column::UniqueIdentifier:
+        return Role::AccountId;
+    case Column::DisplayName:
+        return Role::DisplayName;
+    case Column::Enabled:
+        return Role::AccountEnabled;
+    case Column::Valid:
+        return Role::AccountValid;
+    case Column::Invalid:
+        // Invalid call
+        return Role::Invalid;
+    }
+
     Q_UNREACHABLE();
-    return Role::InvalidRole;
+    return Role::Invalid;
+}
+
+void AccountsModel::updateAccountData(const Tp::AccountPtr &account, AccountsModel::Role role)
+{
+    const int row = m_accounts.indexOf(account);
+
+    const QModelIndex left = index(row, 0);
+    const QModelIndex right = index(row, columnCount() - 1);
+    emit dataChanged(left, right, { Qt::DisplayRole, roleToUserRole(role) } );
+}
+
+bool AccountsModel::filterAcceptAccount(const Tp::AccountPtr &) const
+{
+    // Base model accepts all accounts
+    return true;
+}
+
+void AccountsModel::sortAccounts(QList<Tp::AccountPtr> *accounts) const
+{
+    const auto comparator = [](const Tp::AccountPtr &left, const Tp::AccountPtr &right) {
+        return left->displayName().compare(right->displayName(), Qt::CaseInsensitive) < 0;
+    };
+    std::sort(accounts->begin(), accounts->end(), comparator);
 }
 
 void AccountsModel::onAMReady(Tp::PendingOperation *operation)
@@ -211,18 +338,78 @@ void AccountsModel::onAMReady(Tp::PendingOperation *operation)
     } else {
         qDebug() << "Account manager is ready.";
     }
-    beginResetModel();
-    m_accounts = m_manager->allAccounts();
-    std::sort(m_accounts.begin(), m_accounts.end(), [](const Tp::AccountPtr &account1, const Tp::AccountPtr &account2) {
-        return account1->displayName().compare(account2->displayName(), Qt::CaseInsensitive) < 0;
-    });
-    endResetModel();
+
+    setAccounts(m_manager->allAccounts());
 }
 
 void AccountsModel::onNewAccount(const Tp::AccountPtr &account)
 {
-    // TODO: beginInsertRows()
-    beginResetModel();
-    m_accounts = m_manager->allAccounts();
-    endResetModel();
+    Q_UNUSED(account)
+    setAccounts(m_manager->allAccounts());
+}
+
+void AccountsModel::onAccountRemoved()
+{
+    Tp::Account *account = qobject_cast<Tp::Account *>(sender());
+    if (!account) {
+        qCWarning(lcAccountsModel) << __func__ << "Invalid call";
+        return;
+    }
+
+    int accountIndex = m_accounts.indexOf(Tp::AccountPtr(account));
+    if (accountIndex < 0) {
+        return;
+    }
+
+    beginRemoveRows(QModelIndex(), accountIndex, accountIndex);
+    m_accounts.removeAt(accountIndex);
+    endRemoveRows();
+}
+
+void AccountsModel::onAccountStateChanged()
+{
+    Tp::Account *account = qobject_cast<Tp::Account *>(sender());
+    if (!account) {
+        qCWarning(lcAccountsModel) << __func__ << "Invalid call";
+        return;
+    }
+
+    qCDebug(lcAccountsModel) << __func__ << account->uniqueIdentifier()
+                             << "enabled:" << account->isEnabled();
+
+    updateAccountData(Tp::AccountPtr(account), Role::AccountEnabled);
+}
+
+void AccountsModel::onAccountValidityChanged()
+{
+    Tp::Account *account = qobject_cast<Tp::Account *>(sender());
+    if (!account) {
+        qCWarning(lcAccountsModel) << __func__ << "Invalid call";
+        return;
+    }
+
+    qCDebug(lcAccountsModel) << __func__ << account->uniqueIdentifier()
+                             << "valid:" << account->isValidAccount();
+
+    updateAccountData(Tp::AccountPtr(account), Role::AccountValid);
+}
+
+void AccountsModel::trackAccount(const Tp::AccountPtr &account)
+{
+    connect(account.data(), &Tp::Account::removed,
+            this, &AccountsModel::onAccountRemoved);
+    connect(account.data(), &Tp::Account::stateChanged,
+            this, &AccountsModel::onAccountStateChanged);
+    connect(account.data(), &Tp::Account::validityChanged,
+            this, &AccountsModel::onAccountValidityChanged);
+}
+
+void AccountsModel::stopTrackingAccount(const Tp::AccountPtr &account)
+{
+    disconnect(account.data(), &Tp::Account::removed,
+               this, &AccountsModel::onAccountRemoved);
+    disconnect(account.data(), &Tp::Account::stateChanged,
+               this, &AccountsModel::onAccountStateChanged);
+    disconnect(account.data(), &Tp::Account::validityChanged,
+               this, &AccountsModel::onAccountValidityChanged);
 }
