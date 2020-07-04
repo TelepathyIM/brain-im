@@ -54,7 +54,7 @@ set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 add_subdirectory(src/brain-im)
 
 if (ENABLE_QML)
-    add_subdirectory(src/imports)
+    add_subdirectory(src/imports/BrainIM)
 endif()
 
 if (ENABLE_QML_CLIENT)
