@@ -324,7 +324,11 @@ bool AccountsModel::filterAcceptAccount(const Tp::AccountPtr &) const
 void AccountsModel::sortAccounts(QList<Tp::AccountPtr> *accounts) const
 {
     const auto comparator = [](const Tp::AccountPtr &left, const Tp::AccountPtr &right) {
-        return left->displayName().compare(right->displayName(), Qt::CaseInsensitive) < 0;
+        int eq = left->displayName().compare(right->displayName(), Qt::CaseInsensitive);
+        if (eq == 0) {
+            eq = left->uniqueIdentifier().compare(right->uniqueIdentifier(), Qt::CaseInsensitive);
+        }
+        return eq < 0;
     };
     std::sort(accounts->begin(), accounts->end(), comparator);
 }
