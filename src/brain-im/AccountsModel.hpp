@@ -51,6 +51,8 @@ public:
 
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QVariant getData(int index, Role role) const;
+    bool setData(int index, Role role, const QVariant &value);
+    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
 
     QHash<int, QByteArray> roleNames() const override;
 
@@ -66,6 +68,8 @@ public slots:
 protected:
     void setAccountManager(const Tp::AccountManagerPtr &accountManager);
     void setAccounts(const QList<Tp::AccountPtr> &accounts);
+
+    void setAccountEnabled(const Tp::AccountPtr &account, bool enabled);
 
     static Role intToRole(int value);
     static int roleToInt(Role role);
@@ -87,6 +91,8 @@ protected slots:
 
     void trackAccount(const Tp::AccountPtr &account);
     void stopTrackingAccount(const Tp::AccountPtr &account);
+
+    void onAccountOperationFinished(Tp::PendingOperation *operation);
 
 protected:
     Tp::AccountManagerPtr m_manager;

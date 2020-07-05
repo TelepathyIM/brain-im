@@ -7,6 +7,14 @@
 
 Q_LOGGING_CATEGORY(lcAccountsModel, "app.accountsModel", QtDebugMsg)
 
+QString boolToString(bool value)
+{
+    if (value) {
+        return QStringLiteral("true");
+    }
+    return QStringLiteral("false");
+}
+
 static const int UserRoleOffset = Qt::UserRole + 1;
 
 /**
@@ -124,6 +132,14 @@ void AccountsModel::setAccounts(const QList<Tp::AccountPtr> &accounts)
     }
 }
 
+void AccountsModel::setAccountEnabled(const Tp::AccountPtr &account, bool enabled)
+{
+    Tp::PendingOperation *operation = account->setEnabled(enabled);
+    operation->setObjectName(QStringLiteral("Account setEnabled(%1)").arg(boolToString(enabled)));
+    connect(operation, &Tp::PendingOperation::finished,
+            this, &AccountsModel::onAccountOperationFinished);
+}
+
 QVector<AccountsModel::Column> AccountsModel::columns() const
 {
     return m_columns;
@@ -192,6 +208,37 @@ QVariant AccountsModel::getData(int index, Role role) const
     }
 
     return QVariant();
+}
+
+bool AccountsModel::setData(int index, AccountsModel::Role role, const QVariant &value)
+{
+    if (role == Role::Invalid) {
+        return false;
+    }
+    if (m_accounts.count() <= index) {
+        return false;
+    }
+
+    const Tp::AccountPtr account = m_accounts.at(index);
+
+    qWarning() << index << role << value;
+    switch (role) {
+    case Role::AccountEnabled:
+        setAccountEnabled(account, value.toBool());
+        break;
+    default:
+        break;
+    }
+
+    return false;
+}
+
+bool AccountsModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    if (!index.isValid()) {
+        return false;
+    }
+    return setData(index.row(), indexToRole(index, role), value);
 }
 
 QHash<int, QByteArray> AccountsModel::roleNames() const
@@ -416,4 +463,18 @@ void AccountsModel::stopTrackingAccount(const Tp::AccountPtr &account)
                this, &AccountsModel::onAccountStateChanged);
     disconnect(account.data(), &Tp::Account::validityChanged,
                this, &AccountsModel::onAccountValidityChanged);
+}
+
+void AccountsModel::onAccountOperationFinished(Tp::PendingOperation *operation)
+{
+    qCWarning(lcAccountsModel) << __func__ << operation;
+    if (!operation) {
+        return;
+    }
+    if (operation->isError()) {
+        qCWarning(lcAccountsModel) << __func__ << operation
+                                   << operation->errorName() << operation->errorMessage();
+    } else {
+        qCWarning(lcAccountsModel) << __func__ << operation;
+    }
 }
