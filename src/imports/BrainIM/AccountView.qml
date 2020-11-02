@@ -33,13 +33,29 @@ ScrollablePage {
                                    })
                     stackView.currentItem.setAccount(accountsDelegate.accountId)
                 }
-                indicator: CheckBox {
-                    id: enabledBox
-                    x: accountsDelegate.mirrored ? accountsDelegate.leftPadding : accountsDelegate.width - width - accountsDelegate.rightPadding
+                indicator: Row {
+                    x: accountsDelegate.mirrored
+                       ? accountsDelegate.leftPadding
+                       : accountsDelegate.width - implicitWidth - accountsDelegate.rightPadding
+
                     anchors.verticalCenter: accountsDelegate.contentItem.verticalCenter
-                    checked: accountsDelegate.accountEnabled
-                    onToggled: {
-                        page.model.setAccountEnabled(accountsDelegate.accountId, enabledBox.checked)
+                    CheckBox {
+                        id: enabledBox
+                        anchors.verticalCenter: parent.verticalCenter
+                        checked: accountsDelegate.accountEnabled
+                        onCheckStateChanged: {
+                            page.model.setAccountEnabled(accountsDelegate.accountId, enabledBox.checked)
+                        }
+                    }
+                    ToolButton {
+                        id: deleteButton_
+                        anchors.verticalCenter: parent.verticalCenter
+                        icon.color: "transparent"
+                        icon.name: "edit-delete"
+
+                        onClicked: {
+                            page.model.removeAccount(accountsDelegate.accountId)
+                        }
                     }
                 }
             }
