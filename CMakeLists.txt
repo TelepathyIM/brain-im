@@ -11,6 +11,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
+include(GNUInstallDirs)
+
 # Add an option for building tests
 option(ENABLE_TESTS "Enable compilation of automated tests" FALSE)
 # Add an option for dev build
@@ -22,7 +24,7 @@ option(ENABLE_QML_CLIENT "Enable QML Client build" FALSE)
 option(USE_TELEPATHY "Build with Telepathy support" TRUE)
 
 if (NOT INSTALL_QML_IMPORT_DIR)
-    set(INSTALL_QML_IMPORT_DIR ${CMAKE_INSTALL_LIBDIR}/qt5/qml)
+    set(INSTALL_QML_IMPORT_DIR ${CMAKE_INSTALL_FULL_LIBDIR}/qt5/qml)
 endif()
 
 find_package(Qt5 CONFIG REQUIRED COMPONENTS
@@ -41,8 +43,6 @@ set(QT_VERSION_MAJOR "5")
 if (USE_TELEPATHY)
     find_package(TelepathyQt5 0.9.8 COMPONENTS Core Service REQUIRED)
 endif()
-
-include(GNUInstallDirs)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W -Wall -Wextra -std=c++11 -Werror=return-type")
