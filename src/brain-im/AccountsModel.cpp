@@ -281,6 +281,19 @@ void AccountsModel::createAccount(const QString &connectionManager,
     });
 }
 
+void AccountsModel::removeAccount(const QString &accountId)
+{
+    Tp::AccountPtr account = getAccount(accountId);
+    if (!account) {
+        return;
+    }
+
+    Tp::PendingOperation *removeOperation = account->remove();
+    connect(removeOperation, &Tp::PendingOperation::finished, [](Tp::PendingOperation *op) {
+        qDebug() << "remove account op:" << op->errorName() << op->errorMessage();
+    });
+}
+
 void AccountsModel::setAccountEnabled(const QString &accountId, bool enabled)
 {
     Tp::AccountPtr account = getAccount(accountId);

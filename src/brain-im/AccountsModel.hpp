@@ -63,6 +63,7 @@ public slots:
                        const QString &protocol, const QString &displayName,
                        const QVariantMap &parameters,
                        const QVariantMap &properties = QVariantMap());
+    void removeAccount(const QString &accountId);
     void setAccountEnabled(const QString &accountId, bool enabled);
 
 protected:
