@@ -2,6 +2,7 @@ module BrainIM
 plugin BrainIMQml
 classname BrainIMQmlPlugin
 
+AccountDelegate 0.1 AccountDelegate.qml
 AccountEditor 0.1 AccountEditor.qml
 AccountView 0.1 AccountView.qml
 ConnectionManagerView 0.1 ConnectionManagerView.qml

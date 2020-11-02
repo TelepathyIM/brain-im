@@ -8,9 +8,6 @@ import BrainIM 0.1
 ScrollablePage {
     id: page
 
-    readonly property int buttonWidth: Math.max(addAccount.implicitWidth,
-                                                Math.min(addAccount.implicitWidth * 2, page.availableWidth / 3))
-
     property alias model: accountsView.model
 
     Column {
@@ -18,46 +15,26 @@ ScrollablePage {
         width: parent.width
         Repeater {
             id: accountsView
-            delegate: ItemDelegate {
+            delegate: AccountDelegate {
                 id: accountsDelegate
                 width: parent.width
                 height: 48
 
-                property string accountId: model.accountId
-                property bool accountEnabled: model.accountEnabled
-                property string displayName: model.displayName || qsTr("<no name>")
-                text: displayName + " (" + managerName + "/" + protocolName + ")"
+                accountId: model.accountId
+                accountEnabled: model.accountEnabled
+                displayName: model.displayName
+                managerName: model.managerName
+                protocolName: model.protocolName
+
                 onClicked: {
                     stackView.push("AccountEditor.qml", {
                                        "title": "Accounts/" + displayName
                                    })
                     stackView.currentItem.setAccount(accountsDelegate.accountId)
                 }
-                indicator: Row {
-                    x: accountsDelegate.mirrored
-                       ? accountsDelegate.leftPadding
-                       : accountsDelegate.width - implicitWidth - accountsDelegate.rightPadding
 
-                    anchors.verticalCenter: accountsDelegate.contentItem.verticalCenter
-                    CheckBox {
-                        id: enabledBox
-                        anchors.verticalCenter: parent.verticalCenter
-                        checked: accountsDelegate.accountEnabled
-                        onCheckStateChanged: {
-                            page.model.setAccountEnabled(accountsDelegate.accountId, enabledBox.checked)
-                        }
-                    }
-                    ToolButton {
-                        id: deleteButton_
-                        anchors.verticalCenter: parent.verticalCenter
-                        icon.color: "transparent"
-                        icon.name: "edit-delete"
-
-                        onClicked: {
-                            page.model.removeAccount(accountsDelegate.accountId)
-                        }
-                    }
-                }
+                onSetAccountEnabled: page.model.setAccountEnabled(accountId, enabled)
+                onRemoveAccount: page.model.removeAccount(accountId)
             }
         }
     }

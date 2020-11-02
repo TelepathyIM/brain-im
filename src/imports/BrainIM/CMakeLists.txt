@@ -31,6 +31,7 @@ target_link_libraries(BrainIMQml PUBLIC
 )
 
 set(qml_SOURCES
+    AccountDelegate.qml
     AccountEditor.qml
     AccountView.qml
     ConnectionManagerView.qml
