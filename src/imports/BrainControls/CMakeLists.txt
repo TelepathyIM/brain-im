@@ -26,6 +26,9 @@ target_link_libraries(BrainControlsPlugin PUBLIC
 )
 
 set(qml_SOURCES
+    ColumnLayout.qml
+    ListView.qml
+    RowLayout.qml
     Spacer.qml
 )
 target_sources(BrainControlsPlugin PRIVATE ${qml_SOURCES})

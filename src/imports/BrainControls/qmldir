@@ -1,3 +1,6 @@
 module BrainControls
 
+ColumnLayout 0.1 ColumnLayout.qml
+ListView 0.1 ListView.qml
+RowLayout 0.1 RowLayout.qml
 Spacer 0.1 Spacer.qml
